@@ -1,8 +1,7 @@
-
 import os
 import arcpy
-import gtfs_shapes_to_features
 
+        
 def process_gtfs_data(folder_path, gtfs_folders):
     arcpy.env.overwriteOutput = True
     arcpy.env.workspace = folder_path
@@ -52,16 +51,110 @@ def process_gtfs_data(folder_path, gtfs_folders):
         print(f"The complete GTFS shapefile can be found in the {gtfs_folder} folder titled GTFSComplete.shp")
         print("\n")
 
-FolderPath = r"C:\Users\Jordan Lin\Downloads\GEOG_181C\MyProject26\MyProject26"
-GTFSFolders = [
-    "AVTA-GTFS",
-    "BigBlue_gtfs",
-    "BruinBus_gtfs",
-    "CulverCity_GTFS",
-    "LAX_gtfs",
-    "LAdot_gtfs",
-    "Santa Clarita",
-    "lbt_gtfs",
-    "metro_gtfs_bus"
-]
-process_gtfs_data(FolderPath, GTFSFolders)
+def find_closest_stop(user_location, folder_path, gtfs_folders):
+    stops_to_user_loc_table = os.path.join(arcpy.env.workspace, "MyProject26.gdb", "StopsToUserLocation.dbf")
+
+    # Create a feature class for the user location
+    user_location_feature = arcpy.management.CreateFeatureclass(out_path=arcpy.env.workspace, out_name="UserLocation", geometry_type="POINT")
+    with arcpy.da.InsertCursor(user_location_feature, ["SHAPE@"]) as cursor:
+        cursor.insertRow([user_location])
+
+    # Find the closest stop from each GTFS folder
+    nearest_stops = []
+
+    for gtfs_folder in gtfs_folders:
+        stops_export_path = os.path.join(folder_path, gtfs_folder, f"{gtfs_folder}_gtfs_StopsExport.shp")
+
+        if arcpy.Exists(stops_export_path):
+            # Use Near tool to find the closest stop to the user location
+            arcpy.analysis.Near(stops_export_path, user_location_feature, method="GEODESIC", nearest_location_table=stops_to_user_loc_table)
+
+            # Retrieve the nearest stop from the table
+            with arcpy.da.SearchCursor(stops_to_user_loc_table, ["NEAR_FID", "NEAR_DIST"], sql_clause=(None, "ORDER BY NEAR_DIST")) as cursor:
+                row = cursor.next()
+                nearest_stop = row[0]
+                nearest_stops.append(nearest_stop)
+
+    # Find the closest stop among all GTFS folders
+    closest_stop = None
+    min_distance = float("inf")
+
+    for stop in nearest_stops:
+        distance = distance_to(user_location, stop)
+        if distance < min_distance:
+            min_distance = distance
+            closest_stop = stop
+
+    return closest_stop
+
+def distance_to(point1, point2):
+    dx = point1.X - point2.X
+    dy = point1.Y - point2.Y
+    return (dx**2 + dy**2)**0.5
+
+def get_stop_details(stop_id, folder_path, gtfs_folders):
+    stop_info = {}
+
+    for gtfs_folder in gtfs_folders:
+        stops_export_path = os.path.join(folder_path, gtfs_folder, f"{gtfs_folder}_gtfs_StopsExport.shp")
+
+        if arcpy.Exists(stops_export_path):
+            fields = ["STOP_NAME", "STOP_LAT", "STOP_LON"]
+
+            with arcpy.da.SearchCursor(stops_export_path, fields, f"OBJECTID = {stop_id}") as cursor:
+                row = cursor.next()
+                stop_info["name"] = row[0]
+                stop_info["latitude"] = row[1]
+                stop_info["longitude"] = row[2]
+                break
+
+    return stop_info
+
+def get_user_location():
+    # Prompt user for current location coordinates (x, y)
+    user_x = float(input("Enter the X coordinate of the user's current location: "))
+    user_y = float(input("Enter the Y coordinate of the user's current location: "))
+
+    return arcpy.Point(user_x, user_y)
+
+def main():
+    FolderPath = r"C:\Users\Jordan Lin\Downloads\GEOG_181C\MyProject26\MyProject26"
+    GTFSFolders = [
+        "AVTA-GTFS",
+        "BigBlue_gtfs",
+        "BruinBus_gtfs",
+        "CulverCity_GTFS",
+        "LAX_gtfs",
+        "LAdot_gtfs",
+        "Santa Clarita",
+        "lbt_gtfs",
+        "metro_gtfs_bus"
+    ]
+
+    # Do all of the table joins
+    process_gtfs_data(FolderPath, GTFSFolders)
+    
+    # Get user location
+    print("Please enter the user's current location:")
+    user_location = get_user_location()
+
+    # Find closest stop
+    print("Finding the closest stop to the user's current location...")
+    closest_stop = find_closest_stop(user_location, FolderPath, GTFSFolders)
+
+    if closest_stop is not None:
+        print("Closest stop found!")
+
+        # Get stop details
+        print("Retrieving stop details...")
+        stop_info = get_stop_details(closest_stop, FolderPath, GTFSFolders)
+
+        print("Closest stop to user's current location:")
+        print(f"Name: {stop_info['name']}")
+        print(f"Latitude: {stop_info['latitude']}")
+        print(f"Longitude: {stop_info['longitude']}")
+    else:
+        print("No closest stop found.")
+        
+if __name__ == "__main__":
+    main()
