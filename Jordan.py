@@ -142,6 +142,9 @@ def main():
         "metro_gtfs_bus"
     ]
 
+    # Process the data
+    process_gtfs_data(FolderPath, GTFSFolders)
+    
     # Merge all stops
     project_gdb = os.path.join(FolderPath, "MyProject26.gdb")
     merged_stops = os.path.join(project_gdb, "MergedStops")
