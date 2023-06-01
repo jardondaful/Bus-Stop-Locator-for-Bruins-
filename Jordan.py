@@ -1,8 +1,9 @@
 import os
 import arcpy
 
-        
+
 def process_gtfs_data(folder_path, gtfs_folders):
+    # Process GTFS data to create feature classes
     arcpy.env.overwriteOutput = True
     arcpy.env.workspace = folder_path
 
@@ -50,32 +51,10 @@ def process_gtfs_data(folder_path, gtfs_folders):
         print(f"Processing {gtfs_folder} - done!")
         print(f"The complete GTFS shapefile can be found in the {gtfs_folder} folder titled GTFSComplete.shp")
         print("\n")
-        
-        
-        
+
+
 def convert_gtfs_stops_to_features(folder_path, gtfs_folders):
-    arcpy.env.overwriteOutput = True
-    arcpy.env.workspace = folder_path
-
-    project_gdb = os.path.join(folder_path, "MyProject26.gdb")
-
-    for gtfs_folder in gtfs_folders:
-        gtfs_path = os.path.join(folder_path, gtfs_folder)
-
-        gtfs_stops = os.path.join(gtfs_path, "stops.txt")
-
-        # Output feature class path
-        output_feature_class = os.path.join(project_gdb, f"{gtfs_folder}_stops_GTFSStopsToFeatures")
-
-        # Process GTFS Stops To Features
-        arcpy.transit.GTFSStopsToFeatures(
-            in_gtfs_stops_file=gtfs_stops,
-            out_feature_class=output_feature_class
-        )
-        
-        
-# Stops generated
-def convert_gtfs_stops_to_features(folder_path, gtfs_folders):
+    # Convert GTFS stops to feature classes
     arcpy.env.overwriteOutput = True
     arcpy.env.workspace = folder_path
 
@@ -87,7 +66,7 @@ def convert_gtfs_stops_to_features(folder_path, gtfs_folders):
         gtfs_stops = os.path.join(gtfs_path, "stops.txt")
 
         # Generate a valid feature class name
-        feature_class_name = arcpy.ValidateTableName(gtfs_folder, project_gdb)
+        feature_class_name = arcpy.ValidateTableName(f"{gtfs_folder}_stops", project_gdb)
 
         # Output feature class path
         output_feature_class = os.path.join(project_gdb, feature_class_name)
@@ -98,70 +77,55 @@ def convert_gtfs_stops_to_features(folder_path, gtfs_folders):
             out_feature_class=output_feature_class
         )
 
-        print(f"GTFS Stops to Features conversion completed for {gtfs_folder}!")
+        # Add XY coordinates to the generated feature class
+        arcpy.management.AddXY(output_feature_class)
 
         print(f"GTFS Stops to Features conversion completed for {gtfs_folder}!")
-        
-        
+
+
+def get_user_location():
+    # Prompt user for current location coordinates (latitude, longitude)
+    user_latitude = float(input("Enter the latitude of the user's current location: "))
+    user_longitude = float(input("Enter the longitude of the user's current location: "))
+
+    return [user_latitude, user_longitude]
+
 
 def find_closest_stop(user_location, folder_path, gtfs_folders):
-    closest_stop = None
+    closest_stop_name = None
     min_distance = float("inf")
 
-    for gtfs_folder in gtfs_folders:
-        stops_export_path = os.path.join(folder_path, gtfs_folder, f"{gtfs_folder}_stops_GTFSStopsToFeatures.shp")
+    project_gdb = os.path.join(folder_path, "MyProject26.gdb")
+    stops_export_path = os.path.join(project_gdb, "MergedStops")
 
-        if arcpy.Exists(stops_export_path):
-            # Use Near tool to find the closest stop to the user location
-            arcpy.analysis.Near(stops_export_path, user_location_feature, method="GEODESIC", nearest_location_table=stops_to_user_loc_table)
+    if arcpy.Exists(stops_export_path):
+        user_lat, user_lon = user_location
 
-            # Retrieve the nearest stop from the table
-            with arcpy.da.SearchCursor(stops_to_user_loc_table, ["NEAR_FID", "NEAR_DIST"], sql_clause=(None, "ORDER BY NEAR_DIST")) as cursor:
-                row = cursor.next()
-                nearest_stop = row[0]
-                distance = row[1]
+        # Retrieve the nearest stop from the table
+        with arcpy.da.SearchCursor(stops_export_path, ["stop_name", "stop_lat", "stop_lon"]) as cursor:
+            for row in cursor:
+                stop_name = row[0]
+                stop_lat = row[1]
+                stop_lon = row[2]
+
+                # Calculate the distance between the user location and the current stop
+                distance = calculate_distance(user_lat, user_lon, stop_lat, stop_lon)
 
                 # Check if the current stop is closer than the previous closest stop
                 if distance < min_distance:
                     min_distance = distance
-                    closest_stop = nearest_stop
+                    closest_stop_name = stop_name
+                    closest_stop_location = (stop_lat, stop_lon)
 
-    return closest_stop
+    if closest_stop_location is not None:
+        print("\nClosest stop found!")
+        print("Stop Name:", closest_stop_name)
+        print("Latitude:", closest_stop_location[0])
+        print("Longitude:", closest_stop_location[1])
+    else:
+        print("No closest stop found.")
 
-
-
-def distance_to(point1, point2):
-    dx = point1.X - point2.X
-    dy = point1.Y - point2.Y
-    return (dx**2 + dy**2)**0.5
-
-def get_stop_details(stop_id, folder_path, gtfs_folders):
-    stop_info = {}
-
-    for gtfs_folder in gtfs_folders:
-        stops_export_path = os.path.join(folder_path, gtfs_folder, f"{gtfs_folder}_gtfs_StopsExport.shp")
-
-        if arcpy.Exists(stops_export_path):
-            fields = ["STOP_NAME", "STOP_LAT", "STOP_LON"]
-
-            with arcpy.da.SearchCursor(stops_export_path, fields, f"OBJECTID = {stop_id}") as cursor:
-                row = cursor.next()
-                stop_info["name"] = row[0]
-                stop_info["latitude"] = row[1]
-                stop_info["longitude"] = row[2]
-                break
-
-    return stop_info
-
-
-
-def get_user_location():
-    # Prompt user for current location coordinates (x, y)
-    user_x = float(input("Enter the X coordinate of the user's current location: "))
-    user_y = float(input("Enter the Y coordinate of the user's current location: "))
-
-    return arcpy.Point(user_x, user_y)
-
+    return closest_stop_location
 
 
 def main():
@@ -178,34 +142,34 @@ def main():
         "metro_gtfs_bus"
     ]
 
-#     # Do all of the table joins
-#     process_gtfs_data(FolderPath, GTFSFolders)AC
-    
-#      # Convert GTFS stops to features
-#     print("Converting GTFS Stops to Features...")
-#     convert_gtfs_stops_to_features(FolderPath, GTFSFolders)
-    
+    # Merge all stops
+    project_gdb = os.path.join(FolderPath, "MyProject26.gdb")
+    merged_stops = os.path.join(project_gdb, "MergedStops")
+    stops_export_paths = []
+    for gtfs_folder in GTFSFolders:
+        feature_class_name = arcpy.ValidateTableName(f"{gtfs_folder}_stops", project_gdb)
+        stops_export_path = os.path.join(project_gdb, feature_class_name)
+        stops_export_paths.append(stops_export_path)
+    arcpy.management.Merge(stops_export_paths, merged_stops)
+    print("STOPS MERGED\n")
+
     # Get user location
-    print("Please enter the user's current location:")
     user_location = get_user_location()
 
     # Find closest stop
-    print("Finding the closest stop to the user's current location...")
-    closest_stop = find_closest_stop(user_location, FolderPath, GTFSFolders)
+    print("\nFinding the closest stop to the user's current location...")
+    closest_stop_start = find_closest_stop(user_location, FolderPath, GTFSFolders)
 
-#     if closest_stop is not None:
-#         print("Closest stop found!")
+    print("\n--------------------------------------------------------------------------------------")
+    
+    # Get desired destination from the user
+    print("\nEnter the desired destination:")
+    destination_location = get_user_location()
 
-#         # Get stop details
-#         print("Retrieving stop details...")
-#         stop_info = get_stop_details(closest_stop, FolderPath, GTFSFolders)
+    # Find closest stop to desired destination
+    print("\nFinding the closest stop to the desired destination...")
+    closest_stop_destination = find_closest_stop(destination_location, FolderPath, GTFSFolders)
 
-#         print("Closest stop to user's current location:")
-#         print(f"Name: {stop_info['name']}")
-#         print(f"Latitude: {stop_info['latitude']}")
-#         print(f"Longitude: {stop_info['longitude']}")
-#     else:
-#         print("No closest stop found.")
-        
+
 if __name__ == "__main__":
     main()
