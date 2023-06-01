@@ -52,6 +52,15 @@ def process_gtfs_data(folder_path, gtfs_folders):
         print(f"The complete GTFS shapefile can be found in the {gtfs_folder} folder titled GTFSComplete.shp")
         print("\n")
 
+def calculate_distance(lat1, lon1, lat2, lon2):
+    # Calculate the distance between two sets of coordinates using the haversine formula
+    R = 6371  # Earth's radius in kilometers
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    distance = R * c
+    return distance
 
 def convert_gtfs_stops_to_features(folder_path, gtfs_folders):
     # Convert GTFS stops to feature classes
@@ -142,8 +151,8 @@ def main():
         "metro_gtfs_bus"
     ]
 
-    # Process the data
-    process_gtfs_data(FolderPath, GTFSFolders)
+#     # Process the data
+#     process_gtfs_data(FolderPath, GTFSFolders)
     
     # Merge all stops
     project_gdb = os.path.join(FolderPath, "MyProject26.gdb")
