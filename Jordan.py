@@ -86,6 +86,7 @@ def calculate_distance(lat1, lon1, lat2, lon2):
 
 
 def convert_gtfs_stops_to_features(folder_path, gtfs_folders):
+    print("GENERATING STOPS")
     # Convert GTFS stops to feature classes
     arcpy.env.overwriteOutput = True
     arcpy.env.workspace = folder_path
@@ -174,11 +175,15 @@ def main():
         "metro_gtfs_bus"
     ]
 
-    # Process the data
-    process_gtfs_data(FolderPath, GTFSFolders)
+#     # Process the data
+#     process_gtfs_data(FolderPath, GTFSFolders)
+
     
-    # Merge the resulting data
-    merge_shapefiles(folder_path, gtfs_folders, output_shapefile)
+#     # Merge the resulting data
+#     merge_shapefiles(folder_path, gtfs_folders, output_shapefile)
+    
+    #Generate the stops
+    convert_gtfs_stops_to_features(FolderPath, GTFSFolders)
 
     # Merge all stops
     project_gdb = os.path.join(FolderPath, "MyProject26.gdb")
