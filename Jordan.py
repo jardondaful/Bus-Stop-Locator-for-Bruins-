@@ -1,6 +1,6 @@
 import os
 import arcpy
-
+import math
 
 def process_gtfs_data(folder_path, gtfs_folders):
     # Process GTFS data to create feature classes
@@ -44,14 +44,36 @@ def process_gtfs_data(folder_path, gtfs_folders):
         # Join all the joined tables with the shapes to features called GTFSHome via the route_id field
         trips_shapes = arcpy.management.JoinField(in_data=shapes_to_features, in_field="route_id", join_table=trips3, join_field="route_id")
 
+        # Get the bus name from the gtfs_folder
+        bus_name = gtfs_folder.split('_')[0]
+
         # Export GTFS shapefile with everything joined
-        gtfs_complete = os.path.join(gtfs_path, "GTFSComplete.shp")
+        gtfs_complete = os.path.join(gtfs_path, f"{bus_name}_GTFSComplete.shp")
         arcpy.conversion.ExportFeatures(in_features=trips_shapes, out_features=gtfs_complete)
 
         print(f"Processing {gtfs_folder} - done!")
-        print(f"The complete GTFS shapefile can be found in the {gtfs_folder} folder titled GTFSComplete.shp")
+        print(f"The complete GTFS shapefile can be found in the {gtfs_folder} folder titled {bus_name}_GTFSComplete.shp")
         print("\n")
 
+
+def merge_shapefiles(folder_path, gtfs_folders, output_shapefile):
+    # Set the workspace and overwrite output
+    arcpy.env.workspace = folder_path
+    arcpy.env.overwriteOutput = True
+
+    # Create a list to store the paths of the shapefiles to be merged
+    shapefiles_to_merge = []
+
+    # Loop through the GTFS folders and add the shapefile paths to the list
+    for gtfs_folder in gtfs_folders:
+        gtfs_path = os.path.join(folder_path, gtfs_folder)
+        shapefile_path = os.path.join(gtfs_path, f"{gtfs_folder}_GTFSComplete.shp")
+        shapefiles_to_merge.append(shapefile_path)
+
+    # Merge the shapefiles
+    arcpy.management.Merge(shapefiles_to_merge, output_shapefile)
+
+    print("Shapefile merge completed!")
 def calculate_distance(lat1, lon1, lat2, lon2):
     # Calculate the distance between two sets of coordinates using the haversine formula
     R = 6371  # Earth's radius in kilometers
@@ -61,6 +83,7 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     distance = R * c
     return distance
+
 
 def convert_gtfs_stops_to_features(folder_path, gtfs_folders):
     # Convert GTFS stops to feature classes
@@ -94,10 +117,10 @@ def convert_gtfs_stops_to_features(folder_path, gtfs_folders):
 
 def get_user_location():
     # Prompt user for current location coordinates (latitude, longitude)
-    user_latitude = float(input("Enter the latitude of the user's current location: "))
-    user_longitude = float(input("Enter the longitude of the user's current location: "))
+    user_input = input("Enter the coordinates of the user's current location (latitude, longitude): ")
+    user_latitude, user_longitude = map(float, user_input.split(','))
 
-    return [user_latitude, user_longitude]
+    return user_latitude, user_longitude
 
 
 def find_closest_stop(user_location, folder_path, gtfs_folders):
@@ -151,9 +174,12 @@ def main():
         "metro_gtfs_bus"
     ]
 
-#     # Process the data
-#     process_gtfs_data(FolderPath, GTFSFolders)
+    # Process the data
+    process_gtfs_data(FolderPath, GTFSFolders)
     
+    # Merge the resulting data
+    merge_shapefiles(folder_path, gtfs_folders, output_shapefile)
+
     # Merge all stops
     project_gdb = os.path.join(FolderPath, "MyProject26.gdb")
     merged_stops = os.path.join(project_gdb, "MergedStops")
@@ -173,7 +199,7 @@ def main():
     closest_stop_start = find_closest_stop(user_location, FolderPath, GTFSFolders)
 
     print("\n--------------------------------------------------------------------------------------")
-    
+
     # Get desired destination from the user
     print("\nEnter the desired destination:")
     destination_location = get_user_location()
