@@ -74,14 +74,13 @@ def merge_shapefiles(folder_path, gtfs_folders, output_shapefile):
     arcpy.management.Merge(shapefiles_to_merge, output_shapefile)
 
     print("Shapefile merge completed!")
+
+
 def calculate_distance(lat1, lon1, lat2, lon2):
-    # Calculate the distance between two sets of coordinates using the haversine formula
-    R = 6371  # Earth's radius in kilometers
-    dlat = math.radians(lat2 - lat1)
-    dlon = math.radians(lon2 - lon1)
-    a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-    distance = R * c
+    # Calculate the Euclidean distance between two sets of coordinates
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+    distance = math.sqrt(dlat ** 2 + dlon ** 2)
     return distance
 
 
@@ -161,6 +160,25 @@ def find_closest_stop(user_location, folder_path, gtfs_folders):
     return closest_stop_location
 
 
+def search_gtfscomplete_for_location(shapefile_path, closest_stop_destination):
+    with arcpy.da.SearchCursor(shapefile_path, ["stop_lat", "stop_lon", "route_long"]) as cursor:
+        for row in cursor:
+            lat = row[0]
+            lon = row[1]
+
+            # Check if the latitude and longitude match
+            if lat == closest_stop_destination[0] and lon == closest_stop_destination[1]:
+                # Extract the bus system from the shapefile path
+                folder_name = os.path.dirname(shapefile_path)
+                bus_system = os.path.basename(folder_name).split("_")[0]
+                route_long = row[2]
+
+                return bus_system, route_long
+
+    # No matching location found in the shapefile
+    return None, None
+
+
 def main():
     FolderPath = r"C:\Users\Jordan Lin\Downloads\GEOG_181C\MyProject26\MyProject26"
     GTFSFolders = [
@@ -175,26 +193,31 @@ def main():
         "metro_gtfs_bus"
     ]
 
-#     # Process the data
-#     process_gtfs_data(FolderPath, GTFSFolders)
+    GTFSCompleteFolders = [
+        "AVTA-GTFS_GTFSComplete",
+        "BigBlue_gtfs_GTFSComplete",
+        "BruinBus_gtfs_GTFSComplete",
+        "CulverCity_GTFS_GTFSComplete",
+        "LAX_gtfs_GTFSComplete",
+        "LAdot_gtfs_GTFSComplete",
+        "Santa Clarita_GTFSComplete",
+        "lbt_gtfs_GTFSComplete",
+        "metro_gtfs_bus_GTFSComplete"
+    ]
 
-    
-#     # Merge the resulting data
-#     merge_shapefiles(folder_path, gtfs_folders, output_shapefile)
-    
-    #Generate the stops
-    convert_gtfs_stops_to_features(FolderPath, GTFSFolders)
+#     #Generate the stops
+#     convert_gtfs_stops_to_features(FolderPath, GTFSFolders)
 
-    # Merge all stops
-    project_gdb = os.path.join(FolderPath, "MyProject26.gdb")
-    merged_stops = os.path.join(project_gdb, "MergedStops")
-    stops_export_paths = []
-    for gtfs_folder in GTFSFolders:
-        feature_class_name = arcpy.ValidateTableName(f"{gtfs_folder}_stops", project_gdb)
-        stops_export_path = os.path.join(project_gdb, feature_class_name)
-        stops_export_paths.append(stops_export_path)
-    arcpy.management.Merge(stops_export_paths, merged_stops)
-    print("STOPS MERGED\n")
+#     # Merge all stops
+#     project_gdb = os.path.join(FolderPath, "MyProject26.gdb")
+#     merged_stops = os.path.join(project_gdb, "MergedStops")
+#     stops_export_paths = []
+#     for gtfs_folder in GTFSFolders:
+#         feature_class_name = arcpy.ValidateTableName(f"{gtfs_folder}_stops", project_gdb)
+#         stops_export_path = os.path.join(project_gdb, feature_class_name)
+#         stops_export_paths.append(stops_export_path)
+#     arcpy.management.Merge(stops_export_paths, merged_stops)
+#     print("STOPS MERGED\n")
 
     # Get user location
     user_location = get_user_location()
@@ -216,3 +239,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
