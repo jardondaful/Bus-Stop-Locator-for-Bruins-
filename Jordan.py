@@ -204,6 +204,17 @@ def main():
         "lbt_gtfs_GTFSComplete",
         "metro_gtfs_bus_GTFSComplete"
     ]
+    GTFSStops = [
+        "AVTA_GTFS_stops",
+        "BIGBLUE_gtfs_stops",
+        "BruinBus_gtfs_stops",
+        "CulverCity_GTFS_stops",
+        "LAX_gtfs_stops",
+        "LAdot_gtfs_stops",
+        "Santa_Clarita_stops",
+        "lbt_gtfs_stops",
+        "metro_gtfs_stops"
+    ]
 
 #     #Generate the stops
 #     convert_gtfs_stops_to_features(FolderPath, GTFSFolders)
