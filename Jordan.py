@@ -113,11 +113,41 @@ def convert_gtfs_stops_to_features(folder_path, gtfs_folders):
         arcpy.management.AddXY(output_feature_class)
 
         print(f"GTFS Stops to Features conversion completed for {gtfs_folder}!")
+        
 
+def add_route_id_to_stop_shapefile(stop_shapefile, gtfs_complete_folder):
+    # Set the workspace and overwrite output
+    arcpy.env.workspace = arcpy.Describe(stop_shapefile).path
+    arcpy.env.overwriteOutput = True
+
+    # Add a new field to store the route_id
+    arcpy.management.AddField(stop_shapefile, "route_id", "TEXT")
+
+    # Get the path to the GTFSComplete route file
+    gtfs_complete_route_file = os.path.join(gtfs_complete_folder, "routes.txt")
+
+    # Read the GTFSComplete route file and extract the route_id values
+    route_ids = set()
+    with open(gtfs_complete_route_file, "r") as file:
+        next(file)  # Skip the header line
+        for line in file:
+            route_id = line.strip().split(",")[0]
+            route_ids.add(route_id)
+
+    # Update the route_id field in the stop shapefile
+    with arcpy.da.UpdateCursor(stop_shapefile, ["route_id"]) as cursor:
+        for row in cursor:
+            row[0] = ",".join(route_ids)
+            cursor.updateRow(row)
+
+    print("Route IDs added to the stop shapefile for the GTFSComplete folder:", gtfs_complete_folder)
+
+
+    
 
 def get_user_location():
     # Prompt user for current location coordinates (latitude, longitude)
-    user_input = input("Enter the coordinates of the user's current location (latitude, longitude): ")
+    user_input = input("Enter the coordinates of your current location (latitude, longitude): ")
     user_latitude, user_longitude = map(float, user_input.split(','))
 
     return user_latitude, user_longitude
@@ -215,10 +245,28 @@ def main():
         "lbt_gtfs_stops",
         "metro_gtfs_stops"
     ]
+    
+#     # Process the data
+#     process_gtfs_data(FolderPath, GTFSFolders)
+
+    
+#     # Merge the resulting data
+#     merge_shapefiles(folder_path, gtfs_folders, output_shapefile)
 
 #     #Generate the stops
 #     convert_gtfs_stops_to_features(FolderPath, GTFSFolders)
 
+#     #Join route_id
+#     i = 0
+#     for gtfs_folder in GTFSStops:
+#         stop_shapefile = os.path.join(FolderPath, GTFSFolders[i], GTFSCompleteFolders[i])
+#         add_route_id_to_stop_shapefile(stop_shapefile, gtfs_folder)
+#         i = i + 1
+        
+#     # Add route_id to MergedStops
+#     merged_stops = os.path.join(FolderPath, "MyProject26.gdb", "MergedStops")
+#     add_route_id_to_merged_stops(merged_stops, GTFSFolders)
+    
 #     # Merge all stops
 #     project_gdb = os.path.join(FolderPath, "MyProject26.gdb")
 #     merged_stops = os.path.join(project_gdb, "MergedStops")
@@ -247,7 +295,38 @@ def main():
     print("\nFinding the closest stop to the desired destination...")
     closest_stop_destination = find_closest_stop(destination_location, FolderPath, GTFSFolders)
 
+    print("Finding stop info...")
+    # Search GTFSComplete files for the location
+    i = 0
+    for i, gtfs_folder in enumerate(GTFSCompleteFolders):
+        shapefile_path = os.path.join(FolderPath, GTFSFolders[i], gtfs_folder)
 
+        # Check if the bus path exists
+        if not os.path.exists(shapefile_path):
+            print(f"Skipping {gtfs_folder} - bus path", shapefile_path, " doesn't exist.")
+            continue
+
+        bus_system, route_long = search_gtfscomplete_for_location(shapefile_path, closest_stop_destination)
+
+        if bus_system and route_long:
+            print("\nMatching location found in", gtfs_folder, "!")
+            print("Bus System:", bus_system)
+            print("Route Long:", route_long)
+            break
+        else:
+            print("\nNo matching location found in", gtfs_folder)
+
+    print("\n--------------------------------------------------------------------------------------")
+
+    # Get desired destination from the user
+    print("\nEnter the desired destination:")
+    destination_location = get_user_location()
+
+    # Find closest stop to desired destination
+    print("\nFinding the closest stop to the desired destination...")
+    closest_stop_destination = find_closest_stop(destination_location, FolderPath, GTFSFolders)
+    
+    
+    
 if __name__ == "__main__":
     main()
-
