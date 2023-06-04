@@ -1,0 +1,106 @@
+import os
+import arcpy
+
+folder_path = r"C:\Users\julyquintero\Downloads\MyProject26"
+
+arcpy.env.overwriteOutput = True
+arcpy.env.workspace = folder_path
+
+ProjectGDB = os.path.join(folder_path, "MyProject26.gdb")
+
+GTFSFolders = [
+    "AVTA-GTFS",
+    "BigBlue_gtfs",
+    "BruinBus_gtfs",
+    "CulverCity_GTFS",
+    "LAdot_gtfs",
+    "Santa Clarita",
+    "lbt_gtfs"
+]
+
+# Create an empty list to store the paths of the joined tables
+joined_tables = []
+
+for gtfs_folder in GTFSFolders:
+    gtfs_path = os.path.join(folder_path, gtfs_folder)
+
+    # Create separate geodatabase if it doesn't exist
+    export_gdb = os.path.join(gtfs_path, f"{gtfs_folder}_Export.gdb")
+    if not arcpy.Exists(export_gdb):
+        arcpy.management.CreateFileGDB(os.path.dirname(export_gdb), os.path.basename(export_gdb))
+    
+    gtfs_trips = os.path.join(gtfs_path, "trips.txt")
+    gtfs_stop_time = os.path.join(gtfs_path, "stop_times.txt")
+    gtfs_stops = os.path.join(gtfs_path, "stops.txt")
+    gtfs_routes = os.path.join(gtfs_path, "routes.txt")
+
+    # Export trips text file to editable table
+    print("exporting trips text file to editable table")
+    export_trips = os.path.join(export_gdb, "Trips")
+    arcpy.conversion.ExportTable(in_table=gtfs_trips, out_table=export_trips)
+
+    # Export stop times text file to editable table
+   # print("exporting stop times text file to editable table")
+    export_stop_times = os.path.join(export_gdb, "StopTimes")
+    arcpy.conversion.ExportTable(in_table=gtfs_stop_time, out_table=export_stop_times)
+
+    # Export stops text file to editable table
+#    print("exporting stops text file to editable table")
+    export_stops = os.path.join(export_gdb, "Stops")
+    arcpy.conversion.ExportTable(in_table=gtfs_stops, out_table=export_stops)
+
+    # Export routes text file to editable table
+ #   print("exporting routes text file to editable table")
+    export_routes = os.path.join(export_gdb, "Routes")
+    arcpy.conversion.ExportTable(in_table=gtfs_routes, out_table=export_routes)
+
+    # Join stop times to stops using stop_id field
+ #   print("joining stops to stop times")
+    arcpy.management.JoinField(in_data=export_stop_times, in_field="stop_id", join_table=export_stops, join_field="stop_id")
+
+    # Join stop times with trips using trip_id field
+    print("joining trips to stop times")
+    arcpy.management.JoinField(in_data=export_stop_times, in_field="trip_id", join_table=export_trips, join_field="trip_id")
+
+    # Join stop times with routes using route_id field
+    #print("joining routes with stop times")
+    arcpy.management.JoinField(in_data=export_stop_times, in_field="route_id", join_table=export_routes, join_field="route_id")
+
+    # Get the bus name from the gtfs_folder
+    bus_name = gtfs_folder.split('_')[0]
+
+    # Check if agency_id field exists and its data type
+ #   field_names = [field.name for field in arcpy.ListFields(export_stop_times)]
+  #  if "agency" not in field_names:
+   #     arcpy.AddField_management(export_stop_times, "agency", "TEXT")
+ #   else:
+  #      field = arcpy.ListFields(export_stop_times, "agency_id")[0]
+#     if field.type != "String":
+#            arcpy.DeleteField_management(export_stop_times, "agency_id")
+#            arcpy.AddField_management(export_stop_times, "agency_id", "TEXT")
+
+
+    # Update agency_id field with folder name
+   # with arcpy.da.UpdateCursor(export_stop_times, ["agency"]) as cursor:
+  #      for row in cursor:
+    #        row[0] = str(bus_name)  # Convert bus_name to string
+     #       cursor.updateRow(row)
+
+    # Save the joined table as a new feature class
+    joined_table = os.path.join(export_gdb, "JoinedTable")
+    arcpy.conversion.TableToTable(export_stop_times, export_gdb, "JoinedTable")
+
+
+
+    
+    # Add the path of the joined table to the list
+    joined_tables.append(joined_table)
+
+    # Merge all the joined tables into a single table in MyProject26.gdb
+    print("merging all joined tables")
+    merge_output = os.path.join(ProjectGDB, "MergedTable")
+    arcpy.management.Merge(joined_tables, merge_output)
+    print(f"Processing {gtfs_folder} - done!")
+
+
+print("Done!")
