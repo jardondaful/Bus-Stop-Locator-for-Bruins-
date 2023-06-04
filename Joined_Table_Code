@@ -1,3 +1,6 @@
+# this code creates a merged table of all the joins we need of all the GTFS folder data - found in project gdb
+# issue is that many route_id values are 0 (Bruin Bus / Culver City for the most part)
+
 import os
 import arcpy
 
