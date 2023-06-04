@@ -105,25 +105,33 @@ def merge_stop_times_tables(folder_path, gtfs_folders, output_table):
         stop_times_tables_to_merge.append(stop_times_table)
 
     # Merge the stop_times tables
-    arcpy.management.Merge(stop_times_tables_to_merge, output_table)
+    merged_output_table = os.path.join(folder_path, f"{output_table}_{gtfs_folders[0]}")
+    arcpy.management.Merge(stop_times_tables_to_merge, merged_output_table)
 
-    print("Stop_times tables merged!")
+    print(f"Stop_times tables merged into {merged_output_table}!")
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    # Calculate the Euclidean distance between two sets of coordinates
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+    distance = math.sqrt(dlat ** 2 + dlon ** 2)
+    return distance
 
 def main():
     FolderPath = r"C:\Users\Jordan Lin\Downloads\GEOG_181C\MyProject26\MyProject26"
     GTFSFolders = [
-        "AVTA-GTFS"
+        "AVTA-GTFS",
+        "BigBlue_GTFS"
     ]
     
     GTFSJoinedFolders = [
-        "AVTA_GTFS_StopTimes"
+        "AVTA_GTFS_StopTimes",
+        "BigBlue_GTFS_StopTimes"
     ]
 
-#     convert_gtfs_txt_to_tables(FolderPath, GTFSFolders)
-#     create_joins(FolderPath, GTFSFolders)
-    print("Cuck")
+    convert_gtfs_txt_to_tables(FolderPath, GTFSFolders)
+    create_joins(FolderPath, GTFSFolders)
     add_agency_id_field(FolderPath, GTFSFolders, GTFSJoinedFolders)
-    print("JOINED WORK")
-#     merge_stop_times_tables(FolderPath, GTFSJoinedFolders, output_table)
-    
+    merge_stop_times_tables(FolderPath, GTFSFolders, "MergedStopTimes")
+
 main()
