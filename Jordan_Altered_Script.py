@@ -68,27 +68,26 @@ def create_joins(folder_path, gtfs_folders):
         print(f"Joins created for {gtfs_folder}!")
 
 
-def add_agency_id_field(folder_path, gtfs_folders):
+def add_agency_id_field(folder_path, gtfs_folders, gtfs_joined_folders):
     print("ADDING AGENCY_ID FIELD")
+    i = 0
     for gtfs_folder in gtfs_folders:
-        gtfs_path = os.path.join(folder_path, gtfs_folder)
-        export_gdb = os.path.join(gtfs_path, "GTFSExport.gdb")
-        stops_table = os.path.join(export_gdb, f"{gtfs_folder}_Stops")
-        stop_times_table = os.path.join(export_gdb, f"{gtfs_folder}_StopTimes")
+        gtfs_path = os.path.join(folder_path, gtfs_folder, "GTFSExport.gdb", gtfs_joined_folders[i])
 
         # Check if agency_id field exists, if not, add it
-        field_names = [field.name for field in arcpy.ListFields(stop_times_table)]
+        field_names = [field.name for field in arcpy.ListFields(gtfs_path)]
         if "agency_id" not in field_names:
-            arcpy.AddField_management(stop_times_table, "agency_id", "TEXT")
+            arcpy.AddField_management(gtfs_path, "agency_id", "TEXT")
 
         # Update agency_id field with bus_name
         bus_name = gtfs_folder.split('_')[0]
-        with arcpy.da.UpdateCursor(stop_times_table, ["agency_id"]) as cursor:
+        with arcpy.da.UpdateCursor(gtfs_path, ["agency_id"]) as cursor:
             for row in cursor:
                 row[0] = bus_name
                 cursor.updateRow(row)
-
+        i = i + 1
         print(f"Agency_ID field added to {gtfs_folder}_StopTimes table.")
+
 
 def merge_stop_times_tables(folder_path, gtfs_folders, output_table):
     print("MERGING STOP_TIMES TABLES")
@@ -112,7 +111,6 @@ def merge_stop_times_tables(folder_path, gtfs_folders, output_table):
 
 def main():
     FolderPath = r"C:\Users\Jordan Lin\Downloads\GEOG_181C\MyProject26\MyProject26"
-    print("What the fuck")
     GTFSFolders = [
         "AVTA-GTFS"
     ]
@@ -121,14 +119,11 @@ def main():
         "AVTA_GTFS_StopTimes"
     ]
 
-#     # Convert GTFS text files to editable tables
 #     convert_gtfs_txt_to_tables(FolderPath, GTFSFolders)
-#     print("Someone fucking kill me")
-    
-    create_joins(FolderPath, GTFSFolders)
-    print("i am bozoed out")
-    
-    add_agency_id_field(FolderPath, GTFSFolders)
-    print("jesus fucking christ")
+#     create_joins(FolderPath, GTFSFolders)
+    print("Cuck")
+    add_agency_id_field(FolderPath, GTFSFolders, GTFSJoinedFolders)
+    print("JOINED WORK")
+#     merge_stop_times_tables(FolderPath, GTFSJoinedFolders, output_table)
     
 main()
