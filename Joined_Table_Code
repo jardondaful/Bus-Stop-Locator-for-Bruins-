@@ -69,29 +69,28 @@ for gtfs_folder in GTFSFolders:
     # Get the bus name from the gtfs_folder
     bus_name = gtfs_folder.split('_')[0]
 
+
+    ##  this part commented did not work correctly
     # Check if agency_id field exists and its data type
- #   field_names = [field.name for field in arcpy.ListFields(export_stop_times)]
-  #  if "agency" not in field_names:
-   #     arcpy.AddField_management(export_stop_times, "agency", "TEXT")
- #   else:
-  #      field = arcpy.ListFields(export_stop_times, "agency_id")[0]
-#     if field.type != "String":
+#    field_names = [field.name for field in arcpy.ListFields(export_stop_times)]
+#    if "agency" not in field_names:
+#        arcpy.AddField_management(export_stop_times, "agency", "TEXT")
+#    else:
+#        field = arcpy.ListFields(export_stop_times, "agency_id")[0]
+#        if field.type != "String":
 #            arcpy.DeleteField_management(export_stop_times, "agency_id")
 #            arcpy.AddField_management(export_stop_times, "agency_id", "TEXT")
 
 
-    # Update agency_id field with folder name
-   # with arcpy.da.UpdateCursor(export_stop_times, ["agency"]) as cursor:
-  #      for row in cursor:
-    #        row[0] = str(bus_name)  # Convert bus_name to string
-     #       cursor.updateRow(row)
+#    Update agency_id field with folder name
+#    with arcpy.da.UpdateCursor(export_stop_times, ["agency"]) as cursor:
+#        for row in cursor:
+#            row[0] = str(bus_name)  # Convert bus_name to string
+#            cursor.updateRow(row)
 
     # Save the joined table as a new feature class
     joined_table = os.path.join(export_gdb, "JoinedTable")
     arcpy.conversion.TableToTable(export_stop_times, export_gdb, "JoinedTable")
-
-
-
     
     # Add the path of the joined table to the list
     joined_tables.append(joined_table)
@@ -104,3 +103,4 @@ for gtfs_folder in GTFSFolders:
 
 
 print("Done!")
+
