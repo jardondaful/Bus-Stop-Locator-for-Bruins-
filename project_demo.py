@@ -141,8 +141,6 @@ def add_route_id_to_stop_shapefile(stop_shapefile, gtfs_complete_folder):
             cursor.updateRow(row)
 
     print("Route IDs added to the stop shapefile for the GTFSComplete folder:", gtfs_complete_folder)
-
-
     
 
 def get_user_location():
@@ -158,6 +156,65 @@ def get_user_destination():
     user_latitude, user_longitude = map(float, user_input.split(','))
 
     return user_latitude, user_longitude
+
+def find_closest_source_stop(user_latitude, user_longitude, merged_stop_times_table, folder_path):
+    # Set the workspace
+    arcpy.env.workspace = folder_path
+    arcpy.env.overwriteOutput = True
+
+    # Create a search cursor to iterate over the merged stop_times table
+    fields = ["stop_id", "stop_lat", "stop_lon"]
+    with arcpy.da.SearchCursor(merged_stop_times_table, fields) as cursor:
+        closest_stop_id = None
+        closest_distance = float("inf")
+
+        for row in cursor:
+            stop_id, stop_lat, stop_lon = row
+
+            # Calculate the distance between the user location and the current stop
+            distance = calculate_distance(user_latitude, user_longitude, stop_lat, stop_lon)
+
+            # Update the closest stop if a closer one is found
+            if distance < closest_distance:
+                closest_stop_id = stop_id
+                closest_distance = distance
+
+    return closest_stop_id, closest_distance
+
+
+def find_closest_valid_destination_stop(source_stop_id, merged_stop_times_table, stops_table):
+    # Set the workspace
+    arcpy.env.workspace = folder_path
+    arcpy.env.overwriteOutput = True
+
+    # Get the route_id and agency_id of the source stop
+    with arcpy.da.SearchCursor(stops_table, ["route_id", "agency_id"], f"stop_id = '{source_stop_id}'") as cursor:
+        for row in cursor:
+            route_id = row[0]
+            source_agency_id = row[1]
+
+    # Create a search cursor to iterate over the merged stop_times table
+    fields = ["stop_id", "stop_lat", "stop_lon"]
+    with arcpy.da.SearchCursor(merged_stop_times_table, fields) as cursor:
+        closest_stop_id = None
+        closest_distance = float("inf")
+
+        for row in cursor:
+            stop_id, stop_lat, stop_lon = row
+
+            # Check if the stop has the same route_id and agency_id as the source stop
+            with arcpy.da.SearchCursor(stops_table, ["route_id", "agency_id"], f"stop_id = '{stop_id}'") as route_cursor:
+                for route_row in route_cursor:
+                    if route_row[0] == route_id and route_row[1] == source_agency_id:
+                        # Calculate the distance between the source stop and the current stop
+                        distance = calculate_distance(source_stop_lat, source_stop_lon, stop_lat, stop_lon)
+
+                        # Update the closest stop if a closer one with the same route_id and agency_id is found
+                        if distance < closest_distance:
+                            closest_stop_id = stop_id
+                            closest_distance = distance
+
+    return closest_stop_id, closest_distance
 
 
 def find_closest_stop(user_location, folder_path, gtfs_folders):
@@ -188,9 +245,9 @@ def find_closest_stop(user_location, folder_path, gtfs_folders):
 
     if closest_stop_location is not None:
         print("\nClosest stop found!")
-        print("Stop Name:", closest_stop_name)
-        print("Latitude:", closest_stop_location[0])
-        print("Longitude:", closest_stop_location[1])
+        print("Stop's Name:", closest_stop_name)
+        print("Stop's Actual Latitude:", closest_stop_location[0])
+        print("Stop's Actual Longitude:", closest_stop_location[1])
     else:
         print("No closest stop found.")
 
@@ -263,6 +320,7 @@ def main():
 #     #Generate the stops
 #     convert_gtfs_stops_to_features(FolderPath, GTFSFolders)
 
+#=============DISCARD==================
 #     #Join route_id
 #     i = 0
 #     for gtfs_folder in GTFSStops:
@@ -284,8 +342,9 @@ def main():
 #         stops_export_paths.append(stops_export_path)
 #     arcpy.management.Merge(stops_export_paths, merged_stops)
 #     print("STOPS MERGED\n")
+#=============DISCARD==================
 
-    # Get user location
+    # Get location (btw. valid ranges of [33.9, -118.38] and [34.076, -118.439])
     user_location = get_user_location()
 
     # Find closest stop
@@ -294,7 +353,7 @@ def main():
 
     print("\n--------------------------------------------------------------------------------------")
 
-    # Get desired destination from the user
+    # Get desired destination from the user (btw. valid ranges of [33.9, -118.38] and [34.076, -118.439])
     destination_location = get_user_destination()
 
     # Find closest stop to desired destination
