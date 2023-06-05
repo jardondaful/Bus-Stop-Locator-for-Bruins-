@@ -105,10 +105,11 @@ def merge_stop_times_tables(folder_path, gtfs_folders, output_table):
         stop_times_tables_to_merge.append(stop_times_table)
 
     # Merge the stop_times tables
-    merged_output_table = os.path.join(folder_path, f"{output_table}_{gtfs_folders[0]}")
+    merged_output_table = os.path.join(folder_path, output_table)
     arcpy.management.Merge(stop_times_tables_to_merge, merged_output_table)
 
     print(f"Stop_times tables merged into {merged_output_table}!")
+
 
 def calculate_distance(lat1, lon1, lat2, lon2):
     # Calculate the Euclidean distance between two sets of coordinates
@@ -117,21 +118,70 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     distance = math.sqrt(dlat ** 2 + dlon ** 2)
     return distance
 
+def get_user_location():
+    # Prompt user for current location coordinates (latitude, longitude)
+    user_input = input("Enter the coordinates of your current location (latitude, longitude): ")
+    user_latitude, user_longitude = map(float, user_input.split(','))
+
+    return user_latitude, user_longitude
+
+def find_closest_stop(user_latitude, user_longitude, merged_stop_times_table, folder_path):
+    # Set the workspace
+    arcpy.env.workspace = folder_path
+    arcpy.env.overwriteOutput = True
+
+    # Create a search cursor to iterate over the merged stop_times table
+    fields = ["stop_id", "stop_lat", "stop_lon"]
+    with arcpy.da.SearchCursor(merged_stop_times_table, fields) as cursor:
+        closest_stop_id = None
+        closest_distance = float("inf")
+
+        for row in cursor:
+            stop_id, stop_lat, stop_lon = row
+
+            # Calculate the distance between the user location and the current stop
+            distance = calculate_distance(user_latitude, user_longitude, stop_lat, stop_lon)
+
+            # Update the closest stop if a closer one is found
+            if distance < closest_distance:
+                closest_stop_id = stop_id
+                closest_distance = distance
+
+    return closest_stop_id, closest_distance
+
+
+
 def main():
     FolderPath = r"C:\Users\Jordan Lin\Downloads\GEOG_181C\MyProject26\MyProject26"
     GTFSFolders = [
         "AVTA-GTFS",
         "BigBlue_GTFS"
     ]
-    
+
     GTFSJoinedFolders = [
         "AVTA_GTFS_StopTimes",
         "BigBlue_GTFS_StopTimes"
     ]
 
     convert_gtfs_txt_to_tables(FolderPath, GTFSFolders)
+    print("\n")
     create_joins(FolderPath, GTFSFolders)
+    print("\n")
     add_agency_id_field(FolderPath, GTFSFolders, GTFSJoinedFolders)
-    merge_stop_times_tables(FolderPath, GTFSFolders, "MergedStopTimes")
+    print("\n")
+    merge_stop_times_tables(FolderPath, GTFSFolders, "MergedTable")
+    print("\n")
+
+    user_latitude, user_longitude = get_user_location()
+    closest_stop_id, closest_distance = find_closest_stop(
+        user_latitude,
+        user_longitude,
+        os.path.join(FolderPath, "MergedTable"),
+        FolderPath
+    )
+
+    print("\n")
+    print(f"The closest bus stop is {closest_stop_id} which is {closest_distance} units away from your location.")
+    print("\n")
 
 main()
