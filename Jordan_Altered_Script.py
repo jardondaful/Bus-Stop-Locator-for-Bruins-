@@ -41,20 +41,6 @@ def convert_gtfs_txt_to_tables(folder_path, gtfs_folders):
 
         print(f"GTFS text files converted to editable tables for {gtfs_folder}!")
 
-    # Set the workspace to the geodatabase
-    arcpy.env.workspace = export_gdb
-
-    # Alter field types to text for all fields in the tables
-    arcpy.management.AlterFields(stop_times_table, "agency_id TEXT; stop_id TEXT; trip_id TEXT; arrival_time TEXT; departure_time TEXT; stop_sequence TEXT; pickup_type TEXT; drop_off_type TEXT; shape_dist_traveled TEXT")
-    arcpy.management.AlterFields(stops_table, "stop_id TEXT; stop_code TEXT; stop_name TEXT; stop_desc TEXT; stop_lat TEXT; stop_lon TEXT; zone_id TEXT; stop_url TEXT; location_type TEXT; parent_station TEXT; wheelchair_boarding TEXT")
-    arcpy.management.AlterFields(trips_table, "route_id TEXT; service_id TEXT; trip_id TEXT; trip_headsign TEXT; direction_id TEXT; block_id TEXT; shape_id TEXT")
-
-    print("Field types converted to text for all tables.")
-
-    # Return the paths to the exported tables
-    return stop_times_table, stops_table, trips_table
-
-        
 def create_joins(folder_path, gtfs_folders):
     print("CREATING JOINS")
     # Set the workspace
@@ -74,16 +60,12 @@ def create_joins(folder_path, gtfs_folders):
         trips_table = os.path.join(gtfs_path, "TripsExport")
 
         # Join stops to stop_times via stop_id
-        # Specify the field mapping with explicit field types as text
-        arcpy.management.JoinField(stop_times_table, "stop_id", stops_table, "stop_id", stops_table_name, "agency_id TEXT;stop_name TEXT;stop_lat TEXT;stop_lon TEXT")
+        arcpy.management.JoinField(stop_times_table, "stop_id", stops_table, "stop_id", stops_table_name)
 
         # Join trips to stop_times via trip_id
-        # Specify the field mapping with explicit field types as text
-        arcpy.management.JoinField(stop_times_table, "trip_id", trips_table, "trip_id", trips_table_name, "route_id TEXT")
+        arcpy.management.JoinField(stop_times_table, "trip_id", trips_table, "trip_id", trips_table_name)
 
         print(f"Joins created for {gtfs_folder}!")
-
-
 
 def add_agency_id_field(folder_path, gtfs_folders, gtfs_joined_folders):
     print("ADDING AGENCY_ID FIELD")
@@ -102,9 +84,8 @@ def add_agency_id_field(folder_path, gtfs_folders, gtfs_joined_folders):
             for row in cursor:
                 row[0] = bus_name
                 cursor.updateRow(row)
-        i = i + 1
+        i += 1
         print(f"Agency_ID field added to {gtfs_folder}_StopTimes table.")
-
 
 def merge_stop_times_tables(folder_path, gtfs_folders, output_table):
     print("MERGING STOP_TIMES TABLES")
@@ -127,7 +108,6 @@ def merge_stop_times_tables(folder_path, gtfs_folders, output_table):
 
     print(f"Stop_times tables merged into {merged_output_table}!")
 
-
 def calculate_distance(lat1, lon1, lat2, lon2):
     # Calculate the Euclidean distance between two sets of coordinates
     dlat = lat2 - lat1
@@ -142,9 +122,9 @@ def get_user_location():
 
     return user_latitude, user_longitude
 
-def find_closest_source_stop(user_latitude, user_longitude, merged_stop_times_table, folder_path):
+def find_closest_source_stop(user_latitude, user_longitude, merged_stop_times_table):
     # Set the workspace
-    arcpy.env.workspace = folder_path
+    arcpy.env.workspace = arcpy.env.workspace
     arcpy.env.overwriteOutput = True
 
     # Create a search cursor to iterate over the merged stop_times table
@@ -166,16 +146,10 @@ def find_closest_source_stop(user_latitude, user_longitude, merged_stop_times_ta
 
     return closest_stop_id, closest_distance
 
-def find_closest_valid_destination_stop(source_stop_id, merged_stop_times_table, stops_table):
+def find_closest_valid_dest_stop(user_latitude, user_longitude, merged_stop_times_table):
     # Set the workspace
-    arcpy.env.workspace = FolderPath
+    arcpy.env.workspace = arcpy.env.workspace
     arcpy.env.overwriteOutput = True
-
-    # Get the route_id and agency_id of the source stop
-    with arcpy.da.SearchCursor(stops_table, ["route_id", "agency_id"], f"stop_id = '{source_stop_id}'") as cursor:
-        for row in cursor:
-            route_id = row[0]
-            source_agency_id = row[1]
 
     # Create a search cursor to iterate over the merged stop_times table
     fields = ["stop_id", "stop_lat", "stop_lon"]
@@ -186,57 +160,60 @@ def find_closest_valid_destination_stop(source_stop_id, merged_stop_times_table,
         for row in cursor:
             stop_id, stop_lat, stop_lon = row
 
-            # Check if the stop has the same route_id and agency_id as the source stop
-            with arcpy.da.SearchCursor(stops_table, ["route_id", "agency_id"], f"stop_id = '{stop_id}'") as route_cursor:
-                for route_row in route_cursor:
-                    if route_row[0] == route_id and route_row[1] == source_agency_id:
-                        # Calculate the distance between the source stop and the current stop
-                        distance = calculate_distance(source_stop_lat, source_stop_lon, stop_lat, stop_lon)
+            # Calculate the distance between the user location and the current stop
+            distance = calculate_distance(user_latitude, user_longitude, stop_lat, stop_lon)
 
-                        # Update the closest stop if a closer one with the same route_id and agency_id is found
-                        if distance < closest_distance:
-                            closest_stop_id = stop_id
-                            closest_distance = distance
-
+            # Update the closest stop if a closer one is found
+            if distance < closest_distance:
+                closest_stop_id = stop_id
+                closest_distance = distance
     return closest_stop_id, closest_distance
 
-
 def main():
-    FolderPath = r"C:\Users\Jordan Lin\Downloads\GEOG_181C\MyProject26\MyProject26"
-    GTFSFolders = [
+    folder_path = r"C:\Users\Jordan Lin\Downloads\GEOG_181C\MyProject26\MyProject26"
+    gtfs_folders = [
         "AVTA-GTFS",
         "BigBlue_GTFS"
     ]
-
-    GTFSJoinedFolders = [
+    
+    gtfs_joined_folders = [
         "AVTA_GTFS_StopTimes",
         "BigBlue_GTFS_StopTimes"
     ]
 
-#     convert_gtfs_txt_to_tables(FolderPath, GTFSFolders)
+#     # Convert GTFS text files to tables
+#     convert_gtfs_txt_to_tables(folder_path, gtfs_folders)
 #     print("\n")
-#     create_joins(FolderPath, GTFSFolders)
+    
+#     # Create joins between tables
+#     create_joins(folder_path, gtfs_folders)
 #     print("\n")
-#     add_agency_id_field(FolderPath, GTFSFolders, GTFSJoinedFolders)
+    
+#     # Add agency_id field
+#     add_agency_id_field(folder_path, gtfs_folders, gtfs_joined_folders)
 #     print("\n")
-#     merge_stop_times_tables(FolderPath, GTFSFolders, "MergedTable")
+    
+#     # Merge stop_times tables
+#     merge_stop_times_tables(folder_path, gtfs_folders, "MergedTable")
 #     print("\n")
-
+    
     user_latitude, user_longitude = get_user_location()
-    print("Finding closest bus stop...")
-    closest_stop_id, closest_distance = find_closest_source_stop(
-        user_latitude,
-        user_longitude,
-        os.path.join(FolderPath, "MergedTable"),
-        FolderPath
-    )
-
-    print("\n")
-    print(f"The closest bus stop is {closest_stop_id} which is {closest_distance} units away from your location.")
+    
+    # Find closest source stop
+    closest_source_stop_id, closest_source_distance = find_closest_source_stop(user_latitude, user_longitude, os.path.join(folder_path, "MergedTable"))
+    
+    print("\nSearching...\n")
+    print(f"The closest source bus stop is {closest_source_stop_id} which is {closest_source_distance} units away from your location.")
     print("\n")
     
-    # Make sure it has same route ID
-    # Either only search within same bus system
-    # Or go through ALL of them to see if the closest one also has same route ID
+    # Define the source_route_id variable here or retrieve it from your data
+    source_route_id = "your_source_route_id"
+    
+    dest_latitude, dest_longitude = get_user_location()
+    closest_destination_stop_id, closest_destination_distance = find_closest_valid_dest_stop(dest_latitude, dest_longitude, os.path.join(folder_path, "MergedTable"))
+    
+    print("\nSearching...")
+    print(f"The closest valid destination bus stop is {closest_destination_stop_id} which is {closest_destination_distance} units away from your location.")
+    print("\n")
 
 main()
