@@ -254,23 +254,24 @@ def find_closest_stop(user_location, folder_path, gtfs_folders):
     return closest_stop_location
 
 
-def search_gtfscomplete_for_location(shapefile_path, closest_stop_destination):
-    with arcpy.da.SearchCursor(shapefile_path, ["stop_lat", "stop_lon", "route_long"]) as cursor:
-        for row in cursor:
-            lat = row[0]
-            lon = row[1]
+# def search_gtfscomplete_for_location(shapefile_path, closest_stop_destination):
+#     with arcpy.da.SearchCursor(shapefile_path, ["stop_lat", "stop_lon", "route_long"]) as cursor:
+#         for row in cursor:
+#             lat = row[0]
+#             lon = row[1]
 
-            # Check if the latitude and longitude match
-            if lat == closest_stop_destination[0] and lon == closest_stop_destination[1]:
-                # Extract the bus system from the shapefile path
-                folder_name = os.path.dirname(shapefile_path)
-                bus_system = os.path.basename(folder_name).split("_")[0]
-                route_long = row[2]
+#             # Check if the latitude and longitude match
+#             if lat == closest_stop_destination[0] and lon == closest_stop_destination[1]:
+#                 # Extract the bus system from the shapefile path
+#                 folder_name = os.path.dirname(shapefile_path)
+#                 bus_system = os.path.basename(folder_name).split("_")[0]
+#                 route_long = row[2]
 
-                return bus_system, route_long
+#                 return bus_system, route_long
 
-    # No matching location found in the shapefile
-    return None, None
+#     # No matching location found in the shapefile
+#     return None, None
+
 
 # MIN DISTANCE FORMULA FROM THE WHOLE DATA SET (EX: JUST BIG BLUE BUS, STOPS.txt, CAN WE ONLY LOOK THROUGH THIS SPECIFC BUS SYSTEM)
 def main():
@@ -320,6 +321,10 @@ def main():
 #     #Generate the stops
 #     convert_gtfs_stops_to_features(FolderPath, GTFSFolders)
 
+
+
+
+
 #=============DISCARD==================
 #     #Join route_id
 #     i = 0
@@ -343,6 +348,9 @@ def main():
 #     arcpy.management.Merge(stops_export_paths, merged_stops)
 #     print("STOPS MERGED\n")
 #=============DISCARD==================
+
+
+
 
     # Get location (btw. valid ranges of [33.9, -118.38] and [34.076, -118.439])
     user_location = get_user_location()
