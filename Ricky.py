@@ -1,36 +1,54 @@
 import arcpy
+import requests
 
-# Take user input legal address
-address = input("Enter the full, legal address: ")
+def geocode_address(address):
+    # Set up geocoding service URL
+    url = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates"
 
-# Set up locator
-url = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer"
-locator = arcpy.geocoding.GeocodeServer(url)
+    # Create the request payload
+    params = {
+        "SingleLine": address,
+        "f": "json",
+        "outSR": "4326"
+    }
 
-print("Starting geocode")
+    # Send the request and retrieve the response
+    response = requests.get(url, params=params)
 
-# Actual geocoding process
-result = locator.geocodeAddresses([address], outSR=arcpy.SpatialReference(4326))
+    # Check if the request was successful
+    if response.status_code == 200:
+        data = response.json()
 
-# Check if geocoding was successful
-if 'locations' in result:
-    location = result['locations'][0]['location']
-    latitude = location['y']
-    longitude = location['x']
-    
-    # Create a new shapefile
-    output_folder = r"C:\path\to\output\folder"  # Specify the desired output folder path
-    output_shapefile = "geocoded_point.shp"  # Specify the output shapefile name
-    
-    arcpy.env.workspace = output_folder
-    arcpy.management.CreateFeatureclass(output_folder, output_shapefile, "POINT", spatial_reference=arcpy.SpatialReference(4326))
-    
-    # Create a new feature and insert the point
-    with arcpy.da.InsertCursor(output_shapefile, ['SHAPE@XY']) as cursor:
-        cursor.insertRow([(longitude, latitude)])
-    
-    print("Shapefile created successfully.")
-else:
-    print("Geocoding failed.")
+        # Check if there are any candidates found
+        if "candidates" in data:
+            # Get the first candidate
+            candidate = data["candidates"][0]
 
-print("Done geocoding")
+            # Extract the latitude and longitude
+            location = candidate["location"]
+            latitude = location["y"]
+            longitude = location["x"]
+
+            print("Latitude: {}, Longitude: {}".format(latitude, longitude))
+
+            # Create a new shapefile
+            output_folder = r"C:\Users\rmiramo214\Desktop\181C Final Project\MyProject26\MyProject26"
+            output_shapefile = "Geocoded_point.shp"
+            arcpy.env.workspace = output_folder
+            arcpy.management.CreateFeatureclass(output_folder, output_shapefile, "POINT", spatial_reference=arcpy.SpatialReference(4326))
+
+            # Create a new feature and insert the point
+            with arcpy.da.InsertCursor(output_shapefile, ['SHAPE@XY']) as cursor:
+                cursor.insertRow([(longitude, latitude)])
+
+            print("Shapefile created successfully.")
+        else:
+            print("No candidates found.")
+    else:
+        print("Request failed.")
+
+    print("Done geocoding")
+
+# Example usage
+address = "581 Gayle Ave, Los Angeles, CA"
+geocode_address(address)
