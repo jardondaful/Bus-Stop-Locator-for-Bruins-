@@ -1,3 +1,4 @@
+import arcpy
 import requests
 
 # Set up geocoding service URL
@@ -31,6 +32,18 @@ if response.status_code == 200:
         longitude = location["x"]
 
         print("Latitude: {}, Longitude: {}".format(latitude, longitude))
+
+        # Create a new shapefile
+        output_folder = r"C:\Users\Jordan Lin\Downloads\GEOG_181C\MyProject26\MyProject26"
+        output_shapefile = "geocoded_point.shp"
+        arcpy.env.workspace = output_folder
+        arcpy.management.CreateFeatureclass(output_folder, output_shapefile, "POINT", spatial_reference=arcpy.SpatialReference(4326))
+
+        # Create a new feature and insert the point
+        with arcpy.da.InsertCursor(output_shapefile, ['SHAPE@XY']) as cursor:
+            cursor.insertRow([(longitude, latitude)])
+
+        print("Shapefile created successfully.")
     else:
         print("No candidates found.")
 else:
