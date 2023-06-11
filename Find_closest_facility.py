@@ -36,7 +36,7 @@ try:
     layer_name = "ClosestBusStop" #
     travel_mode = "Walking Distance" #
     facilities = os.path.join(ProjectGDB, "TransitInfo", "StopsOnStreets")
-    incidents = os.path.join(folder_path, "Geocoded_point.shp")
+    incidents = os.path.join(folder_path, "Geocoded_points.shp")
     output_layer_file = os.path.join(ProjectGDB, layer_name + ".lyrx")
 
     #Create a new closest facility analysis layer. 
