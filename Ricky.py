@@ -40,15 +40,15 @@ def geocode_address(address, label):
     return None  # Return None if geocoding fails
 
 
-# Example usage
-starting_address = "100 Hollywood Blvd, Los Angeles, CA"
-desired_address = "200 S Grand Ave, Los Angeles, CA"
+# Take user input for addresses
+starting_address = input("Enter the starting address: ")
+desired_address = input("Enter the desired address: ")
 
 starting_coords = geocode_address(starting_address, "Starting Location")
 desired_coords = geocode_address(desired_address, "Desired Location")
 
 if starting_coords and desired_coords:
-    # Create a new shapefilea
+    # Create a new shapefile
     output_folder = r"C:\Users\Jordan Lin\Downloads\GEOG_181C\MyProject26\MyProject26"
     output_shapefile = "geocoded_points.shp"
     arcpy.env.workspace = output_folder
