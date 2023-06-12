@@ -19,7 +19,6 @@ We are a team of Bruins working on a Python scripted toolbox in ArcGIS Pro to lo
 
 - Python
 - ArcGIS Pro
-- SQLite
 
 ## Getting Started
 
