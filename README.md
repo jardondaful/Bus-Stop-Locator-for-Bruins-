@@ -20,17 +20,17 @@ We are a team of Bruins working on a Python scripted toolbox in ArcGIS Pro to lo
 - Python
 - ArcGIS Pro
 
-## Getting Started
+## How to Use
 
-To get started with our project, simply clone the repository and open it in ArcGIS Pro. Make sure to have the necessary dependencies installed before running the code. 🚀
+To start usinng the project, download the entire .zip file and navigate to the .aprx file that is two dirctories in. Once you open the .aprx file, navigate to the Jupyter notebook and run each of the two tasks in order! If the script prompts you to type in some input for your current location and desired destination, go ahead and do so in the specified format. you will eventually see an output that specifies exatcly which bus stops and routes to take and how to reach them!
 
 ## Contributing
 
 We welcome contributions from everyone! Feel free to open an issue or pull request if you would like to contribute to our project. We look forward to hearing from you! 💬
 ## Project Data Links
 ```
-https://drive.google.com/file/d/1xl5853m1XHPXUqga_QShV8zxxTCxe0I6/view?usp=sharing
-https://drive.google.com/file/d/1YjhafOhJ3Ww3cUHywnu-afrHyukXdvde/view?usp=sharing
+Project Data: https://drive.google.com/file/d/1xl5853m1XHPXUqga_QShV8zxxTCxe0I6/view?usp=sharing
+Full Project: https://drive.google.com/file/d/1YjhafOhJ3Ww3cUHywnu-afrHyukXdvde/view?usp=sharing
 ```
 ## License
 
