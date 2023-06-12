@@ -4,7 +4,8 @@ Welcome to the Bus Stop Locator for Bruins project! 🎉
 
 ## About the Project
 
-The Bus Stop Locator for Bruins is a Python-scripted toolbox built in ArcGIS Pro. The purpose of this project is to help locate bus stops within a desired proximity and provide recommendations on which buses to take based on current user inputted data. As output, it generates directions on which bus stops and routes to take in terminal and generates visual layouts of such directions 🌟
+The Bus Stop Locator for Bruins is a Python-scripted toolbox built in ArcGIS Pro. The purpose of this project is to help locate bus stops within a desired proximity and provide recommendations 
+on which buses to take based on current user inputted data. As output, it generates directions on which bus stops and routes to take in terminal and generates visual layouts of such directions 🌟
 
 ## Team Members 👋
 
@@ -42,7 +43,8 @@ Please note that you may need to install the required dependencies, such as `arc
 
 ## File Organization
 
-Once you unzip the file, you can see that all of the public transportation data folders and files (bus point shafiles, geocoded points, etc.) are in the same directory as the main .aprx file. Although there are a lot of data files, you only need to open the .aprx file if you wish to test our bus stop locator
+Once you unzip the file, you can see that all of the public transportation data folders and files (bus point shafiles, geocoded points, etc.) are in the same directory as the main .aprx file. 
+Although there are a lot of data files, you only need to open the .aprx file if you wish to test our bus stop locator
 
 
 ## How to Use
