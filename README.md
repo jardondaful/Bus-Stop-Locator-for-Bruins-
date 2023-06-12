@@ -20,17 +20,8 @@ The Bus Stop Locator for Bruins is a Python-scripted toolbox built in ArcGIS Pro
 - Python
 - ArcGIS Pro
 
-## How to Use
 
-To use the Bus Stop Locator for Bruins, follow these steps:
-
-1. Download the entire .zip file.
-2. Extract the files to your desired location.
-3. Locate the .aprx file within the extracted files.
-4. Open the .aprx file in ArcGIS Pro.
-5. In the Jupyter notebook or Python script, run each of the functions in the main script (`main.py`) in the specified order.
-
-### Code Description
+## Code Description
 
 The main script (`main.py`) contains the following functions:
 
@@ -50,6 +41,16 @@ The main script (`main.py`) contains the following functions:
 7. Review the output, which will provide you with bus stop recommendations and routes to take.
 
 Please note that you may need to install the required dependencies, such as `arcpy` and `requests`, before running the script.
+## How to Use
+
+To use the Bus Stop Locator for Bruins, follow these steps:
+
+1. Download the entire .zip file.
+2. Extract the files to your desired location.
+3. Locate the .aprx file within the extracted files.
+4. Open the .aprx file in ArcGIS Pro.
+5. In the Jupyter notebook or Python script, run each of the functions in the main script (`main.py`) in the specified order.
+
 
 ## Contributing
 
