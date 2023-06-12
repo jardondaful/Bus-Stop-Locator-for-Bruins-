@@ -4,7 +4,7 @@ Welcome to the Bus Stop Locator for Bruins project! 🎉
 
 ## About the Project
 
-The Bus Stop Locator for Bruins is a Python-scripted toolbox built in ArcGIS Pro. The purpose of this project is to help locate bus stops within a desired proximity and provide recommendations on which buses to take based on current user data. 🌟
+The Bus Stop Locator for Bruins is a Python-scripted toolbox built in ArcGIS Pro. The purpose of this project is to help locate bus stops within a desired proximity and provide recommendations on which buses to take based on current user inputted data. As output, it generates directions on which bos stops and routes to take in terminal and generates visual layouts of such directions 🌟
 
 ## Team Members 👋
 
