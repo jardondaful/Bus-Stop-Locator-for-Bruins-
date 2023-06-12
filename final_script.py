@@ -66,6 +66,56 @@ def build_network(network_dataset):
     print("Network built")
     return nw
 
+# Function to run the cursors and perform necessary operations
+def run_cursors_ptdm():
+    # Set environment settings
+    folder_path = r"C:\Users\julyquintero\Downloads\FinalStretch\MyProject1"
+    ProjectGDB = os.path.join(folder_path, "NewGDbase.gdb")
+    env.workspace = ProjectGDB
+    env.overwriteOutput = True
+
+    DirectionPoints = os.path.join(ProjectGDB, "ClosestFacilitySolver6037uo", "ClosestFacilitySolver6037uo_DirectionPoints")
+    StopsOnStreets = os.path.join(ProjectGDB, "StopsOnStreets") 
+
+    # Create a list to store the non-null FacilityID values
+    facility_ids = []
+
+    with arcpy.da.SearchCursor(DirectionPoints, ["ObjectID", "DisplayText", "FacilityID"]) as cursor:
+        print("Directions:")
+        for row in cursor:
+            object_id = row[0]
+            display_text = row[1]
+            facility_id = row[2]
+            print(display_text)
+            
+            if facility_id is not None:
+                print(f"Incident ID: {facility_id}\n")
+
+    # Open a search cursor to iterate over the rows in the input table
+    with arcpy.da.SearchCursor(DirectionPoints, ["FacilityID"]) as cursor:
+        for row in cursor:
+            facility_id = row[0]
+            if facility_id is not None:
+                facility_ids.append(facility_id)
+
+    # Check if there are at least two facility IDs in the list
+    if len(facility_ids) >= 2:
+        # Create a feature layer to perform the selection
+        arcpy.MakeFeatureLayer_management(StopsOnStreets, "StopsLayer")
+
+        # Select features based on the facility IDs
+        where_clause = "OBJECTID = {} OR OBJECTID = {}".format(facility_ids[0], facility_ids[1])
+        arcpy.SelectLayerByAttribute_management("StopsLayer", "NEW_SELECTION", where_clause)
+
+        # Export the selected features to a shapefile
+        arcpy.conversion.ExportFeatures("StopsLayer", os.path.join(folder_path, "BusPoints.shp"))
+
+        print("Export completed successfully.")
+    else:
+        print("Insufficient facility IDs to perform the export.")
+
+    print("Done.")
+
 # Function to geocode addresses and create a shapefile with the locations
 def geocode_and_create_shapefile(folder_path, output_shapefile):
     starting_address = input("Enter the starting address: ")
@@ -147,7 +197,6 @@ def generate_map_layout(project_path, layout_name, map_name, output_folder, outp
     del aprx
 
 
-
 def main():
     folder_path = r"C:\Users\lexiw\Desktop\181C\FinalProject\MyProject26"
     gdb_name = "NewGDbase"
@@ -179,6 +228,9 @@ def main():
 
     # Build the network
     build_network(network_dataset)
+
+    # Run the cursors and perform necessary operations
+    run_cursors_ptdm()
 
     # Geocode addresses and create a shapefile with locations
     geocode_and_create_shapefile(folder_path, output_shapefile)
