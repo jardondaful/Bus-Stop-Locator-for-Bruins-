@@ -40,7 +40,6 @@ CulverCity = os.path.join(FolderPath, "CulverCity_gtfs")
 #In_gtfs = [BigBlue, CulverCity, AVTA, LAdot, LAX, SantaClarita, LBT]
 In_gtfs = [BigBlue, CulverCity]
 
-
 # Create public transit data model
 print("creating public transit data model....this will take a minute")
 arcpy.transit.GTFSToPublicTransitDataModel(In_gtfs, FDS, "INTERPOLATE", "NO_APPEND")
