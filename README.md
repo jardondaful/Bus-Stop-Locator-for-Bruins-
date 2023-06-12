@@ -37,9 +37,6 @@ The main script (`main.py`) contains the following functions:
 - `solve_route(layer_object, stops_path)`: This function solves the route analysis using the network dataset and the specified stops.
 - `generate_map_layout(project_path, layout_name, map_name, output_folder, output_filename)`: This function generates a map layout with a specified title, scale bar, and legend, and exports it as a PDF.
 
-6. If prompted, provide your current location and desired destination in the specified format.
-7. Review the output, which will provide you with bus stop recommendations and routes to take.
-
 Please note that you may need to install the required dependencies, such as `arcpy` and `requests`, before running the script.
 ## How to Use
 
@@ -48,8 +45,9 @@ To use the Bus Stop Locator for Bruins, follow these steps:
 1. Download the entire .zip file.
 2. Extract the files to your desired location.
 3. Locate the .aprx file within the extracted files.
-4. Open the .aprx file in ArcGIS Pro.
-5. In the Jupyter notebook or Python script, run each of the functions in the main script (`main.py`) in the specified order.
+4. Open the .aprx file in ArcGIS Pro and the provided .py file.
+5.. If prompted, provide your current location and desired destination in the specified format.
+6. Review the output, which will provide you with bus stop recommendations and routes to take.
 
 
 ## Contributing
