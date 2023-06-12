@@ -40,6 +40,11 @@ The main script (`main.py`) contains the following functions:
 
 Please note that you may need to install the required dependencies, such as `arcpy` and `requests`, before running the script.
 
+## File Organization
+
+Once you unzip the file, you can see that all of the public transportation data folders and files (bus point shafiles, geocoded points, etc.) are in the same directory as the main .aprx file. Although there are a lot of data files, you only need to open the .aprx file if you wish to test our bus stop locator
+
+
 ## How to Use
 
 To use the Bus Stop Locator for Bruins, follow these steps:
