@@ -32,6 +32,7 @@ The main script (`main.py`) contains the following functions:
 - `connect_streets_to_ptdm(ptdm_path, streets_path)`: This function connects the streets to the public transit data model.
 - `create_network_dataset(template_path, ptdm_path)`: This function creates the network dataset using a template and the public transit data model.
 - `build_network(network_dataset)`: This function builds the network dataset.
+- `run_cursors_ptdm() `: performs cursor operations to extract facility IDs from a dataset and selects features based on those IDs for export to a shapefile.
 - `geocode_and_create_shapefile(folder_path, output_shapefile)`: This function prompts the user to enter the starting and desired addresses, geocodes them, and creates a shapefile with the locations.
 - `solve_closest_facility(layer_object, stops_path, output_shapefile)`: This function solves the closest facility analysis using the network dataset and the specified stops.
 - `solve_route(layer_object, stops_path)`: This function solves the route analysis using the network dataset and the specified stops.
