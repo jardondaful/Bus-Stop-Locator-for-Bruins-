@@ -44,12 +44,14 @@ Please note that you may need to install the required dependencies, such as `arc
 
 To use the Bus Stop Locator for Bruins, follow these steps:
 
-1. Download the entire .zip file.
-2. Extract the files to your desired location.
-3. Locate the .aprx file within the extracted files.
-4. Open the .aprx file in ArcGIS Pro and the provided .py file.
-5.. If prompted, provide your current location and desired destination in the specified format.
-6. Review the output, which will provide you with bus stop recommendations and routes to take and visuals representing the results.
+To use our bus stop locator, follow these steps:
+1) Download the entire .zip file and extract the files to your desired location
+2) Locate the .aprx file within the extracted files.
+3) Open the .aprx file in ArcGIS Pro and the provided .py file.  
+4) Provide your current location and desired destination location as legal addresses when prompted by the script.
+5) Review the output, which will provide you with bus stop recommendations and routes to take and visuals representing the results.
+6) Follow the map or written walking directions to the bus stop closest to your location, and enjoy the bus ride to your desired destination. 
+
 
 ## Contributing
 
